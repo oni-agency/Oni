@@ -852,13 +852,13 @@ footer { background: var(--black); border-top: 1px solid rgba(255,255,255,0.07);
       </div>
       <form class="contact-form reveal" onsubmit="submitForm(event)">
         <div class="form-row">
-          <div class="fg"><label>Prénom *</label><input type="text" placeholder="Marie" required></div>
-          <div class="fg"><label>Nom *</label><input type="text" placeholder="Dupont" required></div>
+          <div class="fg"><label>Prénom *</label><input type="text" name="prenom" placeholder="Marie" required></div>
+          <div class="fg"><label>Nom *</label><input type="text" name="nom" placeholder="Dupont" required></div>
         </div>
-        <div class="fg"><label>Email *</label><input type="email" placeholder="marie@monentreprise.fr" required></div>
+        <div class="fg"><label>Email *</label><input type="email" name="email" placeholder="marie@monentreprise.fr" required></div>
         <div class="form-row">
           <div class="fg"><label>Votre secteur</label>
-            <select>
+            <select name="secteur">
               <option value="">Choisir...</option>
               <option>Artisan / Bâtiment</option>
               <option>Santé / Bien-être</option>
@@ -869,7 +869,7 @@ footer { background: var(--black); border-top: 1px solid rgba(255,255,255,0.07);
             </select>
           </div>
           <div class="fg"><label>Formule qui vous intéresse</label>
-            <select>
+            <select name="formule">
               <option value="">Choisir...</option>
               <option>Starter — 49€/mois</option>
               <option>Essentiel — 89€/mois</option>
@@ -878,7 +878,7 @@ footer { background: var(--black); border-top: 1px solid rgba(255,255,255,0.07);
             </select>
           </div>
         </div>
-        <div class="fg"><label>Votre message</label><textarea placeholder="Parlez-moi un peu de votre activité et de ce que vous cherchez..."></textarea></div>
+        <div class="fg"><label>Votre message</label><textarea name="message" placeholder="Parlez-moi un peu de votre activité et de ce que vous cherchez..."></textarea></div>
         <button type="submit" class="btn-primary" style="width:100%;padding:1rem;font-size:1rem;border-radius:100px;">Envoyer mon message →</button>
         <p style="font-size:0.76rem;color:var(--muted);margin-top:0.5rem;text-align:center;">Vos données ne sont jamais partagées ni revendues.</p>
       </form>
@@ -1178,13 +1178,47 @@ function setFreq(freq, btn) {
   });
 }
 
-// Form submit
-function submitForm(e) {
+// Form submit - connecté à Formspree
+async function submitForm(e) {
   e.preventDefault();
-  const btn = e.target.querySelector('button');
-  btn.textContent = '✓ Message envoyé !';
-  btn.style.background = '#1a6b3c';
-  setTimeout(() => { btn.textContent = 'Envoyer mon message →'; btn.style.background = ''; }, 3000);
+  const form = e.target;
+  const btn = form.querySelector('button');
+  const originalText = btn.textContent;
+  
+  btn.textContent = 'Envoi en cours...';
+  btn.style.opacity = '0.7';
+  btn.disabled = true;
+
+  try {
+    const response = await fetch('https://formspree.io/f/xqewaeoy', {
+      method: 'POST',
+      body: new FormData(form),
+      headers: { 'Accept': 'application/json' }
+    });
+
+    if (response.ok) {
+      btn.textContent = '✓ Message envoyé !';
+      btn.style.background = '#1a6b3c';
+      btn.style.opacity = '1';
+      form.reset();
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.background = '';
+        btn.disabled = false;
+      }, 4000);
+    } else {
+      throw new Error('Erreur envoi');
+    }
+  } catch(err) {
+    btn.textContent = 'Erreur — réessayez';
+    btn.style.background = '#e24b4a';
+    btn.style.opacity = '1';
+    btn.disabled = false;
+    setTimeout(() => {
+      btn.textContent = originalText;
+      btn.style.background = '';
+    }, 3000);
+  }
 }
 
 // Pages légales — ouvrir
